@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fluently AI Kids English Tutor</title>
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f5f7fa;
+      color: #333;
+      padding: 20px;
+    }
+    .app {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+    }
+    input, select, button {
+      margin-top: 5px;
+      padding: 8px;
+      width: 100%;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    #lesson button {
+      width: auto;
+      margin-right: 10px;
+    }
+    #word-display {
+      font-size: 1.6rem;
+      margin: 20px 0;
+    }
+    #feedback {
+      margin-top: 10px;
+      min-height: 1.2em;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1 id="title"></h1>
+    <div id="setup">
+      <label id="label-age" for="age"></label>
+      <input type="number" id="age" min="1" max="10" value="6" />
+      <label id="label-language" for="language"></label>
+      <select id="language">
+        <option value="en">English</option>
+        <option value="es">Español</option>
+        <option value="ko">한국어</option>
+        <option value="tl">Tagalog</option>
+        <option value="fr">Français</option>
+      </select>
+      <button id="start-btn"></button>
+    </div>
+    <div id="lesson" style="display:none;">
+      <p id="level-display"></p>
+      <p id="word-display"></p>
+      <button id="speak-btn"></button>
+      <button id="listen-btn"></button>
+      <p id="feedback"></p>
+      <button id="next-btn" style="display:none;"></button>
+    </div>
+  </div>
+  <script>
+    const translations = {
+      en: {
+        title: "Fluently AI Kids English Tutor",
+        age: "Age",
+        language: "Language",
+        start: "Start Lesson",
+        hear: "Hear Word",
+        repeat: "Listen & Repeat",
+        next: "Next",
+        correct: "Great job!",
+        tryAgain: "Let's try again!",
+        level: "Level",
+        noSupport: "Speech recognition not supported"
+      },
+      es: {
+        title: "Tutor de Inglés Fluently para Niños",
+        age: "Edad",
+        language: "Idioma",
+        start: "Comenzar Lección",
+        hear: "Escuchar Palabra",
+        repeat: "Escuchar y Repetir",
+        next: "Siguiente",
+        correct: "¡Buen trabajo!",
+        tryAgain: "¡Inténtalo de nuevo!",
+        level: "Nivel",
+        noSupport: "Reconocimiento de voz no soportado"
+      },
+      ko: {
+        title: "Fluently 어린이 영어 튜터",
+        age: "나이",
+        language: "언어",
+        start: "수업 시작",
+        hear: "단어 듣기",
+        repeat: "듣고 따라하기",
+        next: "다음",
+        correct: "잘했어요!",
+        tryAgain: "다시 시도해요!",
+        level: "단계",
+        noSupport: "음성 인식이 지원되지 않습니다"
+      },
+      tl: {
+        title: "Fluently AI Tagapag-turo sa Ingles",
+        age: "Edad",
+        language: "Wika",
+        start: "Simulan ang Aralin",
+        hear: "Pakinggan ang Salita",
+        repeat: "Makinig at Ulitin",
+        next: "Susunod",
+        correct: "Magaling!",
+        tryAgain: "Subukan muli!",
+        level: "Antas",
+        noSupport: "Hindi suportado ang pagkilala ng boses"
+      },
+      fr: {
+        title: "Tuteur d'Anglais Fluently pour Enfants",
+        age: "Âge",
+        language: "Langue",
+        start: "Commencer la Leçon",
+        hear: "Entendre le Mot",
+        repeat: "Écouter et Répéter",
+        next: "Suivant",
+        correct: "Bravo!",
+        tryAgain: "Essaie encore!",
+        level: "Niveau",
+        noSupport: "Reconnaissance vocale non prise en charge"
+      }
+    };
+
+    const wordBank = {
+      1: ["cat", "dog", "sun", "book"],
+      2: ["flower", "rabbit", "yellow", "cookie"],
+      3: ["elephant", "computer", "delicious", "adventure"]
+    };
+
+    let currentWord = "";
+    let level = 1;
+    let progress = 0;
+    let currentLang = "en";
+
+    function t(key){
+      return translations[currentLang][key];
+    }
+
+    function updateText(){
+      document.getElementById("title").textContent = t("title");
+      document.getElementById("label-age").textContent = t("age");
+      document.getElementById("label-language").textContent = t("language");
+      document.getElementById("start-btn").textContent = t("start");
+      document.getElementById("speak-btn").textContent = t("hear");
+      document.getElementById("listen-btn").textContent = t("repeat");
+      document.getElementById("next-btn").textContent = t("next");
+    }
+
+    document.getElementById("language").addEventListener("change", e => {
+      currentLang = e.target.value;
+      updateText();
+    });
+
+    updateText();
+
+    document.getElementById("start-btn").addEventListener("click", () => {
+      const age = parseInt(document.getElementById("age").value, 10);
+      level = age < 5 ? 1 : (age < 8 ? 2 : 3);
+      progress = parseInt(localStorage.getItem("progress") || "0", 10);
+      document.getElementById("setup").style.display = "none";
+      document.getElementById("lesson").style.display = "block";
+      nextLesson();
+    });
+
+    function nextLesson(){
+      if(progress >= 3 && level < 3){
+        level++;
+        progress = 0;
+      }
+      document.getElementById("level-display").textContent = t("level") + ": " + level;
+      currentWord = wordBank[level][Math.floor(Math.random() * wordBank[level].length)];
+      document.getElementById("word-display").textContent = currentWord;
+      document.getElementById("feedback").textContent = "";
+      document.getElementById("next-btn").style.display = "none";
+    }
+
+    document.getElementById("speak-btn").addEventListener("click", () => {
+      const utter = new SpeechSynthesisUtterance(currentWord);
+      utter.lang = "en-US";
+      speechSynthesis.speak(utter);
+    });
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+    if(SpeechRecognition){
+      recognition = new SpeechRecognition();
+      recognition.lang = "en-US";
+      recognition.onresult = event => {
+        const said = event.results[0][0].transcript.toLowerCase().trim();
+        if(said === currentWord){
+          document.getElementById("feedback").textContent = t("correct");
+          progress++;
+          localStorage.setItem("progress", progress);
+        } else {
+          document.getElementById("feedback").textContent = t("tryAgain") + " (" + said + ")";
+        }
+        document.getElementById("next-btn").style.display = "inline-block";
+      };
+    } else {
+      document.getElementById("listen-btn").disabled = true;
+      document.getElementById("feedback").textContent = t("noSupport");
+    }
+
+    document.getElementById("listen-btn").addEventListener("click", () => {
+      if(recognition) recognition.start();
+    });
+
+    document.getElementById("next-btn").addEventListener("click", nextLesson);
+  </script>
+</body>
+</html>
